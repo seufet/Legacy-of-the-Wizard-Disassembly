@@ -1,0 +1,8 @@
+*.dat
+*.bin
+*.nes
+*.o
+bak/
+bin/
+ext/
+obj/

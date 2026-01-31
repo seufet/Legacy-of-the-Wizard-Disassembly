@@ -4,48 +4,6 @@
 ; Contact: tom.seufert@gmail.com
 ;
 ;
-; possible discoveries:
-; -looks like you can grab a crown or three with Roas and go get Pochi's crown - avoid rockgae fight and do another boss?
-; -can maintain scroll after death! useless, though, as even an Inn stay doesn't save your items...
-; moving block collision notes
-; travel counter is $496 --> $f3 aka CUR_OBJ_MISC_CTR
-; with chest scroll, mother can get past crossbow block with the right alignment
-;   -notably, firing weapon not required!
-;   -block will attempt to follow mother but if you keep running it hits again and bounces away
-;   -also possible to get stuck in block and have it freeze where it is - not great
-;   -initial hit must be when block is in the middle of an x-hi, i.e. its x lo=8
-;   -acceptable positions include player/block 16 pixels apart with x lo=0, and player x lo can be +/- 1 so 3 pixel range
-; moving blocks take damage from shots but just get to 0 when 'killed' - nothing happens beyond that
-;     -worth at least testing if getting to movable block on Mayna crown scr possible with chest scroll - not many key doors
-;               or horiz screen transitions before then, mostly horizontal/vertical acreage for which schest scroll is 50% faster!
-; -wings and getting under blocks - key is JUMP_FRAMES_REMAINING which is set to 10 when you hit spikes but not if wings on
-;    -freezing this at 0 lets you walk under spikes just like you have the wings. :)
-; -data for portrait jumps - defined in map meta
-; 
-; mysteries remaining:
-; pause jump - when jump, jump_flag=1, jump frames remaining set, descent=0
-; at top of jump, descent flag starts, jump frames remaining=0, jump flag remains set
-;   -if pause during jump, resets descent and jump frames remaining, jump flag reset only if a not pressed when action resumes
-;   -if pause after falling off ledge, jump flag=0, jump frames remaining=0, descent=non-zero
-;        -jf=1 if a held, descent reset, player jumps
-; to make a new jump, both jump flag and jfr must be 0; unfortunately when jfr hits 0, descent is also set to 1 which prevents new jumps
-;
-; Cheat quirks
-; -if you already own a bunch of armor, cheat to get armor will reduce your qty to 1!
-; -cheat to get armor by failing crystal purchase works at any shop with a crystal
-; -cheat to get lots of items also works if run out of magic with the wings!
-;
-;
-;
-; TODO: 
-; Sort out tile_replacement_id
-; and $40f value
-;
-; https://tcrf.net/Legacy_of_the_Wizard - info with unused sprites, etc.
-;
-; 
-;
-;
 ;
 ; Table of Contents:
 ; banks 0-7: 	data for normal dungeon maps, 2 rows of 4 maps per 8k bank
@@ -53,7 +11,7 @@
 ; bank 9:       data for dragon fight map, tile definitions
 ; banks a-b: 	data for music ID's 0-9 and the sound effects
 ; banks c-d:	data for music ID's a-f, data for start screen graphics, a few misc tables, code for the dragon fight
-; banks e-f: 	fixed bank, a few misc tables, code for nmi/rest, sound, game engine
+; banks e-f: 	fixed bank, a few misc tables, code for nmi/reset, sound, game engine
 ;
 ; Mapper notes: 
 ;   	-banks with level data (0-9) always map to $8000-9fff
@@ -18136,6 +18094,5 @@ RESET_VECTOR:
 
 ; Include the CHR
 .segment "CHR"
-;.incbin ".\original.nes", $20010, $10000 
 
 .incbin ".\include\chr\chr-all.chr"

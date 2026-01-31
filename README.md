@@ -56,6 +56,7 @@ Building a ROM
 This project is meant to be compiled using the cc65 suite. 
 
 ROM version: 	Legacy_of_the_Wizard_(U)_[!].nes
+
 MD5 hash: 		DC2075DE098C136D6B8EE43477164045	
 
 In Windows
@@ -73,9 +74,11 @@ Linux, etc
 Sorry, no fancy build script. But if you have cc65, the commands below should work.
 
 Compile:
+
 ca65 LegacyOfTheWizard.asm
 
 Link:
+
 ld65 -C memory.cfg -o LegacyOfTheWizard.nes LegacyOfTheWizard.o
 
 All Platforms
@@ -92,19 +95,24 @@ Many Thanks
 -----------
 
 Aldo Nunez for his Zelda 1 disassembly:	https://github.com/aldonunez/zelda1-disassembly
+
 Southbird for his SMB3 work:			http://www.sonicepoch.com/sm3mix/
 
 Contact
 -------
 
 Tom Seufert aka Lord Tom
+
 Email: 		tom.seufert@gmail.com
+
 Discord:	lordtom77 
 
 Links
 -----
 
 My tasvideos.org publications: 			https://tasvideos.org/Movies-Author2949-obs
+
 YouTube: 								https://www.youtube.com/@LordTom77
+
 Live Atlas TAS of Legacy of the Wizard: https://youtu.be/ksC-J0ylkx4?si=8fTXrnpNFAhPXS6N
 

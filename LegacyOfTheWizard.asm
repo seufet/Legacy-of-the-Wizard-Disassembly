@@ -1094,8 +1094,8 @@ DRAW_DRAGONSLAYER_PROJECTILE:
         
 		; set flags
 		lda     OBJ_SPRITE_FLAGS,y                         ; A713 B9 02 04                 ...
-        sta     $0202,x                         ; A716 9D 02 02                 ...
-        sta     $0206,x                         ; A719 9D 06 02                 ...
+        sta     SPRITE_0_FLAGS,x                         ; A716 9D 02 02                 ...
+        sta     SPRITE_0_FLAGS+4,x                         ; A719 9D 06 02                 ...
         and     #$40                            ; A71C 29 40                    )@
         
 		; branch if horizontally flipped
@@ -1104,27 +1104,27 @@ DRAW_DRAGONSLAYER_PROJECTILE:
 		; not horizontally flipped
 		; 2nd sprite ID is first one + 2
 		lda     OBJ_SPRITE,y                         ; A720 B9 00 04                 ...
-        sta     $0201,x                         ; A723 9D 01 02                 ...
+        sta     SPRITE_0_ID,x                         ; A723 9D 01 02                 ...
         clc                                     ; A726 18                       .
         adc     #$02                            ; A727 69 02                    i.
-        sta     $0205,x                         ; A729 9D 05 02                 ...
+        sta     SPRITE_0_ID+4,x                         ; A729 9D 05 02                 ...
         jmp     LA73B                           ; A72C 4C 3B A7                 L;.
 
 ; ----------------------------------------------------------------------------
 LA72F:
 		; horizontally flipped, 1st sprite ID is 2nd one + 2
         lda     OBJ_SPRITE,y                         ; A72F B9 00 04                 ...
-        sta     $0205,x                         ; A732 9D 05 02                 ...
+        sta     SPRITE_0_ID+4,x                         ; A732 9D 05 02                 ...
         clc                                     ; A735 18                       .
         adc     #$02                            ; A736 69 02                    i.
-        sta     $0201,x                         ; A738 9D 01 02                 ...
+        sta     SPRITE_0_ID,x                         ; A738 9D 01 02                 ...
 LA73B:
 		; position the 2 sprites offset by 8 horizontally
         lda     OBJ_X_LO,y                         ; A73B B9 0C 04                 ...
-        sta     $0203,x                         ; A73E 9D 03 02                 ...
+        sta     SPRITE_0_X,x                         ; A73E 9D 03 02                 ...
         clc                                     ; A741 18                       .
         adc     #$08                            ; A742 69 08                    i.
-        sta     $0207,x                         ; A744 9D 07 02                 ...
+        sta     SPRITE_0_X+4,x                         ; A744 9D 07 02                 ...
         
 		; set the y pos - same value for each
 		lda     OBJ_Y,y                         ; A747 B9 0E 04                 ...
@@ -4814,8 +4814,8 @@ DRAW_OBJECT_Y:
         
 		; obj non-zero type, hasn't fallen offscreen
 		lda     OBJ_SPRITE_FLAGS,y                         ; C2E7 B9 02 04                 ...
-        sta     $0202,x                         ; C2EA 9D 02 02                 ...
-        sta     $0206,x                         ; C2ED 9D 06 02                 ...
+        sta     SPRITE_0_FLAGS,x                         ; C2EA 9D 02 02                 ...
+        sta     SPRITE_0_FLAGS+4,x                         ; C2ED 9D 06 02                 ...
 		and     #$40                            ; C2F0 29 40                    )@
         
 		; branch if sprite flag 6 set
@@ -4824,20 +4824,20 @@ DRAW_OBJECT_Y:
 		; sprite flag 6 clear
 		; set the sprite IDs (2 for each object)
 		lda     OBJ_SPRITE,y                         ; C2F4 B9 00 04                 ...
-        sta     $0201,x                         ; C2F7 9D 01 02                 ...
+        sta     SPRITE_0_ID,x                         ; C2F7 9D 01 02                 ...
         
 		; 2nd sprite ID is +2 by custom
 		adc     #$02                            ; C2FA 69 02                    i.
-        sta     $0205,x                         ; C2FC 9D 05 02                 ...
+        sta     SPRITE_0_ID+4,x                         ; C2FC 9D 05 02                 ...
         jmp     LC30D                           ; C2FF 4C 0D C3                 L..
 
 ; ----------------------------------------------------------------------------
 LC302:
-        ; set sprite IDs - using lower ID # for the $0205 sprite instead of the $0201 one
+        ; set sprite IDs - using lower ID # for the SPRITE_0_ID+4 sprite instead of the SPRITE_0_ID one
 		lda     OBJ_SPRITE,y                         ; C302 B9 00 04                 ...
-        sta     $0205,x                         ; C305 9D 05 02                 ...
+        sta     SPRITE_0_ID+4,x                         ; C305 9D 05 02                 ...
         adc     #$02                            ; C308 69 02                    i.
-        sta     $0201,x                         ; C30A 9D 01 02                 ...
+        sta     SPRITE_0_ID,x                         ; C30A 9D 01 02                 ...
 LC30D:
         ; object X_LO difference with x scroll --> SCRATCH_08
 		lda     OBJ_X_LO,y                         ; C30D B9 0C 04                 ...
@@ -4865,31 +4865,29 @@ LC30D:
         cmp     #OBJ_GEN_TYPE_ENEMY                            ; C32B C9 01                    ..
 		bne     LC33E                           ; C32D D0 0F                    ..
         
-		; enemy drop y
-		lda     OBJ_ITEM_DROP_Y,y                         ; C32F B9 0F 04                 ...
+		; branch if not being hit by projectile
+		lda     OBJ_PROJECTILE_WIGGLE,y                         ; C32F B9 0F 04                 ...
+        beq     LC33E                           ; C332 F0 0A                    ..
         
-		; branch if drop y value 0
-		beq     LC33E                           ; C332 F0 0A                    ..
-        
-		; OBJ_ITEM_DROP_Y non-zero
-		; add it to SCRATCH_08 and clear OBJ_ITEM_DROP_Y
+		; being hit by projectile (projectile code sets it to xFE or x02)
+		; add it to SCRATCH_08 and clear OBJ_PROJECTILE_WIGGLE
+		; this makes enemies wiggle 2 px left/right while a projectile is hitting them
 		clc                                     ; C334 18                       .
         adc     SCRATCH_08                             ; C335 65 08                    e.
         sta     SCRATCH_08                             ; C337 85 08                    ..
         lda     #$00                            ; C339 A9 00                    ..
-        sta     OBJ_ITEM_DROP_Y,y                         ; C33B 99 0F 04                 ...
+        sta     OBJ_PROJECTILE_WIGGLE,y                         ; C33B 99 0F 04                 ...
 LC33E:
-        lda     SCRATCH_08                             ; C33E A5 08                    ..
+        ; branch (2nd sprite in pair offscreen) if SCRATCH_08 >= OFFSCREEN_Y
+		lda     SCRATCH_08                             ; C33E A5 08                    ..
         cmp     #OFFSCREEN_Y                            ; C340 C9 EF                    ..
-        
-		; branch (2nd sprite in pair offscreen) if SCRATCH_08 >= OFFSCREEN_Y
 		bcs     LC363                           ; C342 B0 1F                    ..
         
 		; both sprites onscreen; set the x and y
-		sta     $0203,x                         ; C344 9D 03 02                 ...
+		sta     SPRITE_0_X,x                         ; C344 9D 03 02                 ...
         clc                                     ; C347 18                       .
         adc     #$08                            ; C348 69 08                    i.
-        sta     $0207,x                         ; C34A 9D 07 02                 ...
+        sta     SPRITE_0_X+4,x                         ; C34A 9D 07 02                 ...
         
 		; set the y positions
 		lda     OBJ_Y,y                         ; C34D B9 0E 04                 ...
@@ -4910,7 +4908,7 @@ LC35A:
 ; ----------------------------------------------------------------------------
 ; set x and y for the first sprite of a pair specified by x, with the 2nd drawn offscreen
 LC363:
-        sta     $0203,x                         ; C363 9D 03 02                 ...
+        sta     SPRITE_0_X,x                         ; C363 9D 03 02                 ...
         lda     OBJ_Y,y                         ; C366 B9 0E 04                 ...
         clc                                     ; C369 18                       .
         adc     #OBJ_SCREEN_Y_PAD                            ; C36A 69 2B                    i+
@@ -11259,7 +11257,7 @@ LDF4B:
        
 		; copy temp x hi to current; clear cur obj x and y_copy
 	    lda     #$00                            ; DF51 A9 00                    ..
-        sta     CUR_OBJ_Y_COPY                             ; DF53 85 FC                    ..
+        sta     CUR_OBJ_PROJECTILE_WIGGLE                             ; DF53 85 FC                    ..
         lda     TEMP_NEXT_X_HI                             ; DF55 A5 0F                    ..
         sta     CUR_OBJ_NEXT_X_HI                             ; DF57 85 FA                    ..
         lda     #$00                            ; DF59 A9 00                    ..
@@ -13496,14 +13494,17 @@ LE99C:
 ; ----------------------------------------------------------------------------
 ; wait for the counter to decrement, then re-spawn
 UPDATE_OBJECT_EMPTY:
-        dec     CUR_OBJ_MISC_CTR                             ; E9A5 C6 F3                    ..
+        ; dec counter and branch if it's >= x3C
+		dec     CUR_OBJ_MISC_CTR                             ; E9A5 C6 F3                    ..
         ldx     CUR_OBJ_MISC_CTR                             ; E9A7 A6 F3                    ..
         cpx     #$3C                            ; E9A9 E0 3C                    .<
         bcs     LE9E6                           ; E9AB B0 39                    .9
-        ldy     #ENEMY_X1                            ; E9AD A0 02                    ..
+        
+		; load enemy slot's initial x hi
+		ldy     #ENEMY_X1                            ; E9AD A0 02                    ..
         lda     (MAP_META_PTR_LO),y                         ; E9AF B1 E7                    ..
         
-		; advance to y1
+		; advance to initial y
 		iny                                     ; E9B1 C8                       .
         ora     (MAP_META_PTR_LO),y                         ; E9B2 11 E7                    ..
         
@@ -13567,7 +13568,7 @@ LE9E7:
         sta     CUR_OBJ_RISE_SPEED                             ; E9F5 85 F1                    ..
         sta     CUR_OBJ_FALL_SPEED                             ; E9F7 85 F0                    ..
         sta     CUR_OBJ_DIR                             ; E9F9 85 F4                    ..
-        sta     CUR_OBJ_Y_COPY                             ; E9FB 85 FC                    ..
+        sta     CUR_OBJ_PROJECTILE_WIGGLE                             ; E9FB 85 FC                    ..
         
 		; set hp
 		ldy     #ENEMY_HP                            ; E9FD A0 04                    ..
@@ -13794,23 +13795,22 @@ LEAE5:
         cpx     #$3C                            ; EAE7 E0 3C                    .<
         bcs     LEAF9                           ; EAE9 B0 0E                    ..
         
-		; counter is < x3C
+		; counter is < x3C - item is about to expire; make it flicker
+		
+		; branch (set offscreen) if item currently onscreen
 		ldx     #OFFSCREEN_Y                            ; EAEB A2 EF                    ..
-        
-		; branch if we haven't fallen offscreen - store our current location to CUR_OBJ_Y_COPY
-		; and our CUR_OBJ_NEXT_Y --> OFFSCREEN_Y
-		lda     CUR_OBJ_NEXT_Y                             ; EAED A5 FB                    ..
+        lda     CUR_OBJ_NEXT_Y                             ; EAED A5 FB                    ..
         cmp     #OFFSCREEN_Y                            ; EAEF C9 EF                    ..
         bne     LEAF5                           ; EAF1 D0 02                    ..
+		
+		; item currently offscreen - use CUR_OBJ_Y_COPY to put it back at its original location
 		ldx     CUR_OBJ_Y_COPY                             ; EAF3 A6 FC                    ..
 LEAF5:
-		; if we're falling offscreen, next y --> copy
-		; if we're not falling offscreen, next y --> offscreen_y
-		; either way, y copy --> original next y
-		; none of this appears to matter as these values don't appear to be
-		; used for anything - any movement would have occurred above via APPLY_CALC_POS_TO_CUR_OBJ
-        stx     CUR_OBJ_NEXT_Y                             ; EAF5 86 FB                    ..
-        sta     CUR_OBJ_Y_COPY                             ; EAF7 85 FC                    ..
+		stx     CUR_OBJ_NEXT_Y                             ; EAF5 86 FB                    ..
+        
+		; regardless of whether we're on/offscreen, we save the prior y position to toggle again
+		; next frame
+		sta     CUR_OBJ_Y_COPY                             ; EAF7 85 FC                    ..
 LEAF9:
         jsr     CHECK_OBJECT_INTERACTIONS                           ; EAF9 20 79 F1                  y.
         rts                                     ; EAFC 60                       `
@@ -14330,9 +14330,9 @@ LED31:
         lda     (MAP_META_PTR_LO),y                         ; ED4F B1 E7                    ..
         sta     CUR_OBJ_HP                             ; ED51 85 F2                    ..
         
-		; not sure about this?
+		; cancel any wiggling
 		lda     #$00                            ; ED53 A9 00                    ..
-        sta     CUR_OBJ_Y_COPY                             ; ED55 85 FC                    ..
+        sta     CUR_OBJ_PROJECTILE_WIGGLE                             ; ED55 85 FC                    ..
         rts                                     ; ED57 60                       `
 
 ; ----------------------------------------------------------------------------
@@ -14949,10 +14949,13 @@ LEFC4:
         ora     #$81                            ; EFCD 09 81                    ..
         sta     CUR_OBJ_SPRITE                             ; EFCF 85 ED                    ..
         
-		; set palette, copy Y_COPY to NEXT_Y
+		; set palette
 		lda     #$01                            ; EFD1 A9 01                    ..
         sta     CUR_OBJ_SPRITE_FLAGS                             ; EFD3 85 EF                    ..
-        lda     CUR_OBJ_Y_COPY                             ; EFD5 A5 FC                    ..
+        
+		; now that the corpse has fallen offscreen, we restore the y pos of where it 
+		; was killed, which is where the item shows up
+		lda     CUR_OBJ_Y_COPY                             ; EFD5 A5 FC                    ..
         sta     CUR_OBJ_NEXT_Y                             ; EFD7 85 FB                    ..
         
 		; set fade timer
@@ -15385,11 +15388,13 @@ CHECK_OBJECT_INTERACTIONS:
         dey                                     ; F18B 88                       .
         beq     LF199                           ; F18C F0 0B                    ..
         
-		; not an enemy; branch if we haven't fallen off the bottom of the screen
+		; not an enemy; if we're a flickering item then our CUR_OBJ_NEXT_Y may 
+		; set to offscreen; so we check here and use the on-screen CUR_OBJ_Y_COPY
+		; for collision-detection purposes
 		cpx     #OFFSCREEN_Y                            ; F18E E0 EF                    ..
         bne     LF194                           ; F190 D0 02                    ..
         
-		; we have fallen off - use original y value
+		; flickering item currently offscreen - use the onscreen y copy
 		ldx     CUR_OBJ_Y_COPY                             ; F192 A6 FC                    ..
 LF194:
         stx     PLAYER_MAP_TILE_HI                             ; F194 86 0D                    ..
@@ -15982,7 +15987,7 @@ KILL_BOSS_ENEMY:
         sta     CUR_OBJ_HORIZ_DIR                             ; F46B 85 F6                    ..
         sta     CUR_OBJ_FALL_SPEED                             ; F46D 85 F0                    ..
         lda     CUR_OBJ_NEXT_Y                             ; F46F A5 FB                    ..
-        sta     CUR_OBJ_Y_COPY                             ; F471 85 FC                    ..
+        sta     CUR_OBJ_PROJECTILE_WIGGLE                             ; F471 85 FC                    ..
 LF473:
         ; branch if already falling
 		lda     CUR_OBJ_FALL_SPEED                             ; F473 A5 F0                    ..
@@ -16218,11 +16223,11 @@ BOSS_ANIMATE_SPRITE:
 ; ----------------------------------------------------------------------------
 ; for boss - save to the extra 3 rows in the objects array
 SAVE_CUR_OBJ_EXTRA_BOSS_PARTS:
-        ;
-		lda     CUR_OBJ_Y_COPY                             ; F55E A5 FC                    ..
-        sta     OBJ_ITEM_DROP_Y+$10                           ; F560 8D 1F 04                 ...
-        sta     OBJ_ITEM_DROP_Y+$20                           ; F563 8D 2F 04                 ./.
-        sta     OBJ_ITEM_DROP_Y+$30                           ; F566 8D 3F 04                 .?.
+        ; if the top/left boss part wiggles being hit by projectile, the whole boss wiggles!
+		lda     CUR_OBJ_PROJECTILE_WIGGLE                             ; F55E A5 FC                    ..
+        sta     OBJ_PROJECTILE_WIGGLE+$10                           ; F560 8D 1F 04                 ...
+        sta     OBJ_PROJECTILE_WIGGLE+$20                           ; F563 8D 2F 04                 ./.
+        sta     OBJ_PROJECTILE_WIGGLE+$30                           ; F566 8D 3F 04                 .?.
         
 		; bottom 2 parts have y plus x10
 		lda     CUR_OBJ_NEXT_Y                             ; F569 A5 FB                    ..
@@ -16502,20 +16507,20 @@ LF6ED:
         dey                                     ; F6F0 88                       .
         bne     LF729                           ; F6F1 D0 36                    .6
         
-		; enemy
+		; x = enemy slot we hit
 		ldx     SCRATCH_09                             ; F6F3 A6 09                    ..
         
-		; branch (y=xFE) if cur obj gen type & x01 = 0
+		; branch (y=xFE or -2) if cur obj gen type is an even value
 		lda     CUR_OBJ_GEN_TYPE                             ; F6F5 A5 EE                    ..
         ldy     #$FE                            ; F6F7 A0 FE                    ..
         and     #$01                            ; F6F9 29 01                    ).
         beq     LF6FF                           ; F6FB F0 02                    ..
         
-		; target OBJ_ITEM_DROP_Y --> +/- 2; maybe this makes it wiggle?
+		; odd value (y=2); this makes it wiggle left/right while being hit
 		ldy     #$02                            ; F6FD A0 02                    ..
 LF6FF:
         tya                                     ; F6FF 98                       .
-        sta     OBJ_ITEM_DROP_Y,x                         ; F700 9D 0F 04                 ...
+        sta     OBJ_PROJECTILE_WIGGLE,x                         ; F700 9D 0F 04                 ...
         
 		; apply damage
 		lda     OBJ_HP,x                         ; F703 BD 05 04                 ...

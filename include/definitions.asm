@@ -373,7 +373,17 @@
 	CUR_OBJ_NEXT_X = $f9
 	CUR_OBJ_NEXT_X_HI = $fa
 	CUR_OBJ_NEXT_Y = $fb
-	CUR_OBJ_Y_COPY = $FC
+	
+	; used both to track y pos where enemy was killed to drop item there
+	; and to save onscreen y pos for flickering items (which are set offscreen on frames they aren't drawn)
+	; not sure why they don't take the approach for the flickering player, where they just don't draw on
+	; odd/even frames 
+	CUR_OBJ_Y_COPY = $FC 
+	
+	; same addr as above but for enemies - another name used for clarity
+	; set by projectile code to make enemies wiggle left/right while being hit
+	CUR_OBJ_PROJECTILE_WIGGLE = $FC 
+		
 	
 	; dragon re-uses for different purposes
 	DRAGON_STATE = $f3
@@ -464,7 +474,15 @@
 	OBJ_X_LO = 	$040c
 	OBJ_X_HI = $040D
 	OBJ_Y = $040e
-	OBJ_ITEM_DROP_Y = $040f ; tracks where to put drop as monster falls offscreen
+	
+	; tracks where to put drop as monster falls offscreen
+	; also for flickering items they alternate between on/offscreen, and this saves the onscreen y pos
+	OBJ_Y_COPY = $040f 
+	
+	; same addr as above but for enemies - another name used for clarity
+	; set by projectile code to make enemies wiggle left/right while being hit
+	OBJ_PROJECTILE_WIGGLE = $040f
+	
 	
 	; slot 9 is for moveable/breaking blocks, opening doors temp sprites
 	; map item chest starts as a special enemy in slot a

@@ -2612,7 +2612,7 @@ LAF42:
         bcs     LAF42                           ; AF67 B0 D9                    ..
         
 		; loop if tile id=2 
-		cmp     #$02                            ; AF69 C9 02                    ..
+		cmp     #TILE_KEY_DOOR                            ; AF69 C9 02                    ..
         beq     LAF42                           ; AF6B F0 D5                    ..
         
 		; loop if it's a fake tile
@@ -10696,8 +10696,8 @@ CHECK_SOLID_TILE:
         tax                                     ; DCD0 AA                       .
 		beq     LDCDA                           ; DCD1 F0 07                    ..
         
-		; if lower 6 bits = 2, solid
-		cpx     #$02                            ; DCD3 E0 02                    ..
+		; if we are a key door, solid
+		cpx     #TILE_KEY_DOOR                            ; DCD3 E0 02                    ..
         beq     LDCE0                           ; DCD5 F0 09                    ..
         
 		; otherwise, if lower 6 bits >= x30 we are solid
@@ -10791,21 +10791,19 @@ HANDLE_TILE_SHOP:
 ; ----------------------------------------------------------------------------
 ; touching tile 3 - the princess portrait!
 HANDLE_TILE_PRINCESS:
-        ldx     CUR_EQUIP_SLOT_SELECTED                             ; DD23 A6 55                    .U
+        ; branch (rts) if crown not equipped
+		ldx     CUR_EQUIP_SLOT_SELECTED                             ; DD23 A6 55                    .U
         lda     CUR_EQUIP_ITEMS,x                           ; DD25 B5 51                    .Q
         cmp     #INV_ITEM_CROWN                            ; DD27 C9 0E                    ..
-        
-		; branch (rts) if crown not equipped
-		bne     LDD18                           ; DD29 D0 ED                    ..
+        bne     LDD18                           ; DD29 D0 ED                    ..
         
 		; crown equipped, ooh
-		ldx     #$02                            ; DD2B A2 02                    ..
-        
 		; start with crowns in inventory
-		ldy     PLAYER_INVENTORY_CROWNS                             ; DD2D A4 6E                    .n
+		ldx     #$02                            ; DD2B A2 02                    ..
+        ldy     PLAYER_INVENTORY_CROWNS                             ; DD2D A4 6E                    .n
         lda     #INV_ITEM_CROWN                            ; DD2F A9 0E                    ..
 LDD31:
-        ; add any equipped crowns to the total
+        ; loop and add any equipped crowns to the total
 		cmp     CUR_EQUIP_ITEMS,x                           ; DD31 D5 51                    .Q
         bne     LDD36                           ; DD33 D0 01                    ..
         iny                                     ; DD35 C8                       .
@@ -10814,7 +10812,7 @@ LDD36:
         bpl     LDD31                           ; DD37 10 F8                    ..
         
 		; see if we have 4 total, between inventory and equipped
-		; rts if not
+		; rts if not - can't use portrait
 		cpy     #$04                            ; DD39 C0 04                    ..
         bne     LDD18                           ; DD3B D0 DB                    ..
         
@@ -10910,8 +10908,8 @@ HANDLE_TOUCH_TILE_EFFECTS:
 
 ; ----------------------------------------------------------------------------
 LDDA2:
-		; branch if tile lower 6 bits <> 2
-        cmp     #$02                            ; DDA2 C9 02                    ..
+		; branch if not a key door
+        cmp     #TILE_KEY_DOOR                            ; DDA2 C9 02                    ..
         bne     LDDA9                           ; DDA4 D0 03                    ..
         
 		; tile lower 6 = 2
@@ -10920,7 +10918,7 @@ LDDA2:
 ; ----------------------------------------------------------------------------
 LDDA9:
 		; branch if tile lower 6 <> x3E
-        cmp     #$3E                            ; DDA9 C9 3E                    .>
+        cmp     #TILE_MOVEABLE_BLOCK                            ; DDA9 C9 3E                    .>
         bne     LDDB0                           ; DDAB D0 03                    ..
         
 		; tile lower 6 = x3E (moveable block)
@@ -10947,8 +10945,10 @@ HANDLE_TOUCH_FAKE_TILE:
         sta     CUR_OBJ_GEN_TYPE                             ; DDC0 85 EE                    ..
         lda     #$01                            ; DDC2 A9 01                    ..
         sta     CUR_OBJ_SPRITE_FLAGS                             ; DDC4 85 EF                    ..
-        lda     MAP_REPLACEMENT_TILE_ID                             ; DDC6 A5 71                    .q
-        sta     CUR_OBJ_FALL_SPEED                             ; DDC8 85 F0                    ..
+        
+		; remember what will replace this sprite later
+		lda     MAP_REPLACEMENT_TILE_ID                             ; DDC6 A5 71                    .q
+        sta     CUR_OBJ_REPLACEMENT_TILE                             ; DDC8 85 F0                    ..
         lda     #$0A                            ; DDCA A9 0A                    ..
         sta     CUR_OBJ_MISC_CTR                             ; DDCC 85 F3                    ..
         
@@ -10995,8 +10995,10 @@ OPEN_DOOR:
         sta     CUR_OBJ_GEN_TYPE                             ; DDFF 85 EE                    ..
         lda     #$01                            ; DE01 A9 01                    ..
         sta     CUR_OBJ_SPRITE_FLAGS                             ; DE03 85 EF                    ..
-        lda     MOVEABLE_BLOCK_REPLACEMENT_TILE_ID                             ; DE05 A5 74                    .t
-        sta     CUR_OBJ_FALL_SPEED                             ; DE07 85 F0                    ..
+        
+		; remember tile that will replace sprite when animation finishes
+		lda     MOVEABLE_BLOCK_REPLACEMENT_TILE_ID                             ; DE05 A5 74                    .t
+        sta     CUR_OBJ_REPLACEMENT_TILE                             ; DE07 85 F0                    ..
         lda     #$0F                            ; DE09 A9 0F                    ..
         sta     CUR_OBJ_MISC_CTR                             ; DE0B 85 F3                    ..
         
@@ -11097,7 +11099,7 @@ CHECK_MATTOCK_ACTION:
         sty     SCRATCH_0B                             ; DE71 84 0B                    ..
         lda     (PLAYER_MAP_TILE_PTR),y                       ; DE73 B1 0C                    ..
         and     #$3F                            ; DE75 29 3F                    )?
-        cmp     #$3E                            ; DE77 C9 3E                    .>
+        cmp     #TILE_MOVEABLE_BLOCK                            ; DE77 C9 3E                    .>
 		bne     LDE9D                           ; DE79 D0 22                    ."
         
 		; movable block; place sprite, set flag so we only do one animation at a time, set counter
@@ -11110,11 +11112,12 @@ CHECK_MATTOCK_ACTION:
         lda     #$0F                            ; DE8A A9 0F                    ..
         sta     OBJ_MISC_CTR+$90                           ; DE8C 8D 96 04                 ...
         
-		; mattock
-		; get replacement tile ID
+		; save post-animation replacement tile ID directly to obj array
 		jsr     GET_MOVEABLE_BLOCK_REPLACEMENT                           ; DE8F 20 80 DF                  ..
-        sta     OBJ_DY_DOWN+$90                           ; DE92 8D 93 04                 ...
-        jsr     DECREMENT_PLAYER_MAGIC                           ; DE95 20 F0 E7                  ..
+        sta     OBJ_REPLACEMENT_TILE+$90                           ; DE92 8D 93 04                 ...
+        
+		; take magic/play sound
+		jsr     DECREMENT_PLAYER_MAGIC                           ; DE95 20 F0 E7                  ..
         lda     #SOUND_CROSSBOW                            ; DE98 A9 14                    ..
         sta     a:NEXT_SOUND_EFFECT                           ; DE9A 8D 8F 00                 ...
 LDE9D:
@@ -11123,6 +11126,7 @@ LDE9D:
 
 ; ----------------------------------------------------------------------------
 ; try to slide a block with the glove
+; input - SCRATCH_0B - offset to the tile position we touched
 CHECK_GLOVE_ACTION:
         ; branch (no block move) if no stored dpad data
 		lda     JOYPAD_INPUT_REFERENCE                             ; DE9F A5 FD                    ..
@@ -11144,16 +11148,22 @@ CHECK_GLOVE_ACTION:
         sta     CUR_OBJ_GEN_TYPE                             ; DEB4 85 EE                    ..
         lda     #$03                            ; DEB6 A9 03                    ..
         sta     CUR_OBJ_SPRITE_FLAGS                             ; DEB8 85 EF                    ..
-        ldy     SCRATCH_0B                             ; DEBA A4 0B                    ..
+        
+		; remember the tile we'll get replaced with at the end - it's whatever tile we touched (moveable block)
+		ldy     SCRATCH_0B                             ; DEBA A4 0B                    ..
         lda     (PLAYER_MAP_TILE_PTR),y                       ; DEBC B1 0C                    ..
-        sta     CUR_OBJ_FALL_SPEED                             ; DEBE 85 F0                    ..
-        lda     #$10                            ; DEC0 A9 10                    ..
+        sta     CUR_OBJ_REPLACEMENT_TILE                             ; DEBE 85 F0                    ..
+        
+		; set counter
+		lda     #$10                            ; DEC0 A9 10                    ..
         sta     CUR_OBJ_MISC_CTR                             ; DEC2 85 F3                    ..
         
-		; replace the existing tile
+		; replace the moveable block tile (with a non-solid tile)
 		jsr     GET_MOVEABLE_BLOCK_REPLACEMENT                           ; DEC4 20 80 DF                  ..
         sta     (PLAYER_MAP_TILE_PTR),y                       ; DEC7 91 0C                    ..
-        jsr     SET_TEMP_OBJECT_NEXT_POS                           ; DEC9 20 37 DF                  7.
+        
+		; draw, and we're done processing objects this frame
+		jsr     SET_TEMP_OBJECT_NEXT_POS                           ; DEC9 20 37 DF                  7.
         jsr     UPDATE_GRAPHICS_FOR_TEMP_OBJECT                           ; DECC 20 5E DF                  ^.
         jsr     UPDATE_TEMP_OBJECT                           ; DECF 20 F7 F7                  ..
         lda     #$FF                            ; DED2 A9 FF                    ..
@@ -11199,14 +11209,16 @@ CHECK_CROSSBOW_ACTION:
         sta     CUR_OBJ_SPRITE_FLAGS                             ; DF05 85 EF                    ..
         ldy     SCRATCH_0B                             ; DF07 A4 0B                    ..
         lda     (PLAYER_MAP_TILE_PTR),y                       ; DF09 B1 0C                    ..
-        sta     CUR_OBJ_FALL_SPEED                             ; DF0B 85 F0                    ..
+        sta     CUR_OBJ_REPLACEMENT_TILE                             ; DF0B 85 F0                    ..
         lda     #$00                            ; DF0D A9 00                    ..
         sta     CUR_OBJ_MISC_CTR                             ; DF0F 85 F3                    ..
         
-		; replace existing tile
+		; replace existing tile (with a non-solid tile)
 		jsr     GET_MOVEABLE_BLOCK_REPLACEMENT                           ; DF11 20 80 DF                  ..
         sta     (PLAYER_MAP_TILE_PTR),y                       ; DF14 91 0C                    ..
-        jsr     SET_TEMP_OBJECT_NEXT_POS                           ; DF16 20 37 DF                  7.
+        
+		; move, draw, and we're done with objects this frame
+		jsr     SET_TEMP_OBJECT_NEXT_POS                           ; DF16 20 37 DF                  7.
         jsr     UPDATE_GRAPHICS_FOR_TEMP_OBJECT                           ; DF19 20 5E DF                  ^.
         jsr     UPDATE_TEMP_OBJECT                           ; DF1C 20 F7 F7                  ..
         lda     #$FF                            ; DF1F A9 FF                    ..
@@ -11294,7 +11306,7 @@ UPDATE_GRAPHICS_FOR_TEMP_OBJECT:
 ; ----------------------------------------------------------------------------
 ; look up a substitute tile
 GET_MOVEABLE_BLOCK_REPLACEMENT:
-		; load info on a tile, lower 6 bits
+		; load info on tile we touched, lower 6 bits
         ldy     SCRATCH_0B                             ; DF80 A4 0B                    ..
         lda     (ROM_MAP_TILE_LO),y                         ; DF82 B1 10                    ..
         and     #$3F                            ; DF84 29 3F                    )?
@@ -11307,7 +11319,7 @@ GET_MOVEABLE_BLOCK_REPLACEMENT:
 		; called for a different block type, but we make sure the existing block 
 		; at (ROM_MAP_TILE_LO),y is a moveable block. If it is, we RTS with a=MOVEABLE_BLOCK_REPLACEMENT_TILE_ID.
 		; if not, we return the current value of (ROM_MAP_TILE_LO),y
-		cpx     #$3E                            ; DF89 E0 3E                    .>
+		cpx     #TILE_MOVEABLE_BLOCK                            ; DF89 E0 3E                    .>
         beq     LDF8F                           ; DF8B F0 02                    ..
         lda     (ROM_MAP_TILE_LO),y                         ; DF8D B1 10                    ..
 LDF8F:
@@ -12983,7 +12995,7 @@ DRAW_SHOP_INN_KEEPER:
         lda     #$F3                            ; E785 A9 F3                    ..
         sta     $0255                           ; E787 8D 55 02                 .U.
         
-		; flags
+		; flags - palette 2
 		lda     #$02                            ; E78A A9 02                    ..
         sta     $0252                           ; E78C 8D 52 02                 .R.
         sta     $0256                           ; E78F 8D 56 02                 .V.
@@ -15440,7 +15452,7 @@ LF1BD:
         jsr     CHECK_Y_TILE_SOLID_REDUX                           ; F1CA 20 33 F2                  3.
         bcs     LF1D3                           ; F1CD B0 04                    ..
 LF1CF:
-		; inc counter for how far we've traveled?
+		; accelerate downward
         inc     CUR_OBJ_FALL_SPEED                             ; F1CF E6 F0                    ..
         clc                                     ; F1D1 18                       .
         rts                                     ; F1D2 60                       `
@@ -15728,13 +15740,13 @@ LF30F:
 
 ; ----------------------------------------------------------------------------
 LF324:
-        ; branch (set carry, rts) if f4 bit 1 set
+        ; branch (set carry, rts) if dir not left
         lda     CUR_OBJ_DIR                             ; F324 A5 F4                    ..
-        and     #$02                            ; F326 29 02                    ).
+        and     #BTN_LEFT                          ; F326 29 02                    ).
         bne     LF347                           ; F328 D0 1D                    ..
         
-		; otherwise, dx=1 and we clear f6 (moving right?)
-		lda     #$01                            ; F32A A9 01                    ..
+		; otherwise, dir=right and we clear CUR_OBJ_HORIZ_DIR (moving right)
+		lda     #BTN_RIGHT                            ; F32A A9 01                    ..
         sta     CUR_OBJ_DX                             ; F32C 85 F5                    ..
         lda     #$00                            ; F32E A9 00                    ..
         sta     CUR_OBJ_HORIZ_DIR                             ; F330 85 F6                    ..
@@ -15742,12 +15754,12 @@ LF324:
 
 ; ----------------------------------------------------------------------------
 LF335:
-        ; branch (set carry, rts) if f4 bit 0 set
+        ; branch (set carry, rts) if dir=right
         lda     CUR_OBJ_DIR                             ; F335 A5 F4                    ..
-        and     #$01                            ; F337 29 01                    ).
+        and     #BTN_RIGHT                            ; F337 29 01                    ).
         bne     LF347                           ; F339 D0 0C                    ..
         
-		; otherwise dx=x0F (!) and f6=xFF (moving left?)
+		; otherwise dx=x0F (left speed 1) and f6=xFF (moving left)
 		lda     #$0F                            ; F33B A9 0F                    ..
         sta     CUR_OBJ_DX                             ; F33D 85 F5                    ..
         lda     #$FF                            ; F33F A9 FF                    ..
@@ -16667,8 +16679,8 @@ ERASE_TEMP_OBJECT:
         lda     #$00                            ; F7AA A9 00                    ..
         sta     CUR_OBJ_GEN_TYPE                             ; F7AC 85 EE                    ..
         
-		; branch if CUR_OBJ_FALL_SPEED <> 0 - this is the original tile ID we replaced
-		lda     CUR_OBJ_FALL_SPEED                             ; F7AE A5 F0                    ..
+		; branch if CUR_OBJ_REPLACEMENT_TILE <> 0 - this is the original tile ID we replaced
+		lda     CUR_OBJ_REPLACEMENT_TILE                             ; F7AE A5 F0                    ..
         bne     LF7B5                           ; F7B0 D0 03                    ..
         jmp     TEMP_OBJ_SAVE_AND_RTS                           ; F7B2 4C 96 F8                 L..
 
@@ -16682,7 +16694,7 @@ LF7B5:
         jsr     UPDATE_MAP_TILE_PTRS                           ; F7BD 20 54 CA                  T.
         
 		; restore the original tile
-		lda     CUR_OBJ_FALL_SPEED                             ; F7C0 A5 F0                    ..
+		lda     CUR_OBJ_REPLACEMENT_TILE                             ; F7C0 A5 F0                    ..
         ldy     #$00                            ; F7C2 A0 00                    ..
         sta     (PLAYER_MAP_TILE_PTR),y                       ; F7C4 91 0C                    ..
         

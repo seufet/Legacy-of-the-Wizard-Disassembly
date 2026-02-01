@@ -360,7 +360,8 @@
 	CUR_OBJ_SPRITE = $ED
 	CUR_OBJ_GEN_TYPE = $EE
 	CUR_OBJ_SPRITE_FLAGS = $EF
-	CUR_OBJ_FALL_SPEED = $F0 ; used for corpse downward movement, tile ID for moveable block obj
+	CUR_OBJ_FALL_SPEED = $F0 ; used for corpse downward movement
+	CUR_OBJ_REPLACEMENT_TILE = $F0 ; $f0 also used for tile that will replace temp objects
 	CUR_OBJ_RISE_SPEED = $F1 ; used for corpse upward movement
 	CUR_OBJ_HP = $F2
 	CUR_OBJ_MISC_CTR = $F3
@@ -465,12 +466,14 @@
 	OBJ_SPRITE = $0400 
 	OBJ_GENERAL_TYPE = $0401 
 	OBJ_SPRITE_FLAGS = $0402
-	OBJ_DY_DOWN = $0403
-	OBJ_DY_UP = $0404
+	
+	OBJ_FALL_SPEED = $0403
+	OBJ_REPLACEMENT_TILE = $0403 ; for temp objects only
+	
+	OBJ_RISE_SPEED = $0404
 	OBJ_HP = $0405	
 	OBJ_MISC_CTR = $0406
-	OBJ_FACING_LR = $0407 
-	OBJ_409 = $0409 ; used for moveable block horiz direction	
+	OBJ_DIR = $0407 
 	OBJ_X_LO = 	$040c
 	OBJ_X_HI = $040D
 	OBJ_Y = $040e
@@ -669,6 +672,7 @@
 	; notable tiles
 	; note: each tileset has 64 tiles, so tile IDs are usually checked with an and x3f preceding,
 	; meaning that ladder=00, 40, 80, c0
+	TILE_KEY_DOOR = $02
 	TILE_PRINCESS_PORTRAIT = $03
 	TILE_SHOP = $04
 	TILE_INN = $05 ; also c5
@@ -676,6 +680,7 @@
 	TILE_DOOR = $81
 	TILE_HOME_BOT = $83
 	TILE_HOME_TOP = $85
+	TILE_MOVEABLE_BLOCK = $3e
 	
 
 	SOUND_SHIELD_HIT = $01 ; ? close start screen?
